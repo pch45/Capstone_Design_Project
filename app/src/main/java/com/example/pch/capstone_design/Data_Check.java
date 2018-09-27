@@ -14,7 +14,10 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 
@@ -49,22 +52,69 @@ public class Data_Check extends AppCompatActivity{
                 rec();
             }
         });
+//        t();
     }
-
-    private void rec(){
-        for (int i = 0; i < 5; i++) {
-            findData task = new findData();
-            task.execute("http://" + IP_ADDRESS + "/find.php", "gongdae" + (i + 1));
+    public void t(){
+        for(int i = 0; i < 24; i++){
+            String h;
+            if(i < 10) h = "0"+i;
+            else h = i+"";
+            for(int j = 0 ; j < 60; j++){
+                String m;
+                if(j < 10) m = "0"+j;
+                else m = j+"";
+                InsertData task = new InsertData();
+                task.execute("http://" + IP_ADDRESS + "/init.php", "Information","-1","2018-09-29",h+":"+m+":00");
+            }
         }
     }
 
-    class findData extends AsyncTask<String, Void ,String> {
-        int idx;
+    class InsertData extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... arg0) {
 
             try {
-                idx = Integer.parseInt(arg0[1].substring(7));
+                String id =  arg0[1];
+                String value = arg0[2];
+                String address = arg0[0];
+                String date = arg0[3];
+                String time = arg0[4];
+
+                String link = address+"?id=" + id+"&value="+value+"&date="+date+"&time="+time;
+                URL url = new URL(link);
+                HttpClient client = new DefaultHttpClient();
+                HttpGet request = new HttpGet();
+                request.setURI(new URI(link));
+                HttpResponse response = client.execute(request);
+                BufferedReader in = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+
+                StringBuffer sb = new StringBuffer("");
+                String line = "";
+
+                while ((line = in.readLine()) != null) {
+                    sb.append(line);
+                    break;
+                }
+                in.close();
+                return sb.toString();
+            } catch (Exception e) {
+                return new String("Exception: " + e.getMessage());
+            }
+        }
+    }
+
+    private void rec(){
+            findData task = new findData();
+            task.execute("http://" + IP_ADDRESS + "/find.php", "Information");
+    }
+
+    class findData extends AsyncTask<String, Void ,String> {
+//        int idx;
+        @Override
+        protected String doInBackground(String... arg0) {
+
+            try {
+//                idx = Integer.parseInt(arg0[1].substring(7));
                 String id =  arg0[1];
                 String address = arg0[0];
 
@@ -93,7 +143,7 @@ public class Data_Check extends AppCompatActivity{
 
         @Override
         protected void onPostExecute(String result){
-            textViews[idx-1].setText("공대"+(idx)+"호관 : "+result+"㎍/m³");
+            textViews[0].setText("공대"+(5)+"호관 : "+result+"㎍/m³");
         }
     }
 
