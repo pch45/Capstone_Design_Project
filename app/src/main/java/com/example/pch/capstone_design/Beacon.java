@@ -7,12 +7,12 @@ package com.example.pch.capstone_design;
 public class Beacon {
     private String address;
     private int rssi;
-    private String now;
+    private String value;
 
-    public Beacon(String address, int rssi, String now) {
+    public Beacon(String address, int rssi, String value) {
         this.address = address;
         this.rssi = rssi;
-        this.now = now;
+        this.value = value;
     }
 
     public String getAddress() {
@@ -24,6 +24,6 @@ public class Beacon {
     }
 
     public String getNow() {
-        return now;
+        return value;
     }
 }

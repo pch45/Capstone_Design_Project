@@ -15,6 +15,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -62,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
 
     List<Time> time_list;
 
+    String prev = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,7 +89,6 @@ public class MainActivity extends AppCompatActivity {
         ScanFilter scan = scanFilter.build();
         scanFilters.add(scan);
         mBluetoothLeScanner.startScan(scanFilters, scanSettings, mScanCallback);
-        editData task = new editData();
 
     }
 
@@ -98,28 +100,39 @@ public class MainActivity extends AppCompatActivity {
             try {
                 ScanRecord scanRecord = result.getScanRecord();
                 final ScanResult scanResult = result;
+                Toast.makeText(MainActivity.this, "ScanResult", Toast.LENGTH_SHORT).show();
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {                     // 데이터 가져오는 것만 수정하면 됨
-                                String id = temp.getBytes()[2]+"";
+                                Log.d("DATA",temp.getBytes()+"");
                                 String value = temp.getBytes()[8]+"";
-                                String HH="", MM="", SS="";      //값을 넣겠지?
-                                String finish = "";
-                                if(finish.equals("FF")){
+                                String HH=temp.getBytes()[2]+"", MM=temp.getBytes()[3]+"", SS=temp.getBytes()[4]+"";      //값을 넣겠지?
+                                Toast.makeText(MainActivity.this, "???", Toast.LENGTH_SHORT).show();
+                                if(HH.equals("-1")){
                                     //time_list에 있는걸 평균내서 서버에 올리는 함수를 작성
                                     AVG_To_Server();
                                 }
+                                else {
+                                    if (time_list.isEmpty()) {
+                                        prev = MM;
+                                    } else if (!prev.equals(MM)) {
+                                        AVG_To_Server();
+                                        prev = MM;
+                                    }
 
-                                time_list.add(new Time(HH,MM,SS,value));
+                                    time_list.add(new Time(HH, MM, SS, value));
 
-                                beacon.add(0, new Beacon("1", scanResult.getRssi(), value));
+                                    beacon.add(0, new Beacon(Integer.parseInt(HH) + ":" + Integer.parseInt(MM)
+                                            + ":" + Integer.parseInt(SS), scanResult.getRssi(), value));
+                                    Toast.makeText(MainActivity.this, HH + ":" + time_list.size(), Toast.LENGTH_LONG).show();
 
-                                beaconAdapter = new BeaconAdapter(beacon, getLayoutInflater());
-                                beaconListView.setAdapter(beaconAdapter);
-                                beaconAdapter.notifyDataSetChanged();
+                                    beaconAdapter = new BeaconAdapter(beacon, getLayoutInflater());
+                                    beaconListView.setAdapter(beaconAdapter);
+                                    beaconAdapter.notifyDataSetChanged();
+                                }
                             }
                         });
                     }
@@ -131,22 +144,18 @@ public class MainActivity extends AppCompatActivity {
 
         }
         public void AVG_To_Server(){
-            List<Time> ss = new ArrayList<Time>();
             editData task = new editData();
-            for(int i = 0; i < time_list.size(); i++){
-                Time tmp = time_list.get(i);
-                ss.add(tmp);
-                if(tmp.SS.equals("59")){
-                    int avg = 0;
-                    for(int j = 0 ; j < ss.size(); j++){
-                        avg += Integer.parseInt(ss.get(j).value);
-                    }
-                    avg /= ss.size();
-                    task.execute("http://" + IP_ADDRESS + "/edit.php", "Information",avg+"",tmp.HH+":"+tmp.MM+":00");
-                    ss = new ArrayList<Time>();
-                }
+            int size = time_list.size();
+            if(size == 0) return;
+            Time tmp = time_list.remove(0);
+            int avg = Integer.parseInt(tmp.value);
+            for(int i = 1; i < size; i++){
+                tmp = time_list.remove(0);
+                avg += Integer.parseInt(tmp.value);
             }
-            time_list = new ArrayList<Time>();
+            avg /= size;
+            Toast.makeText(MainActivity.this, avg+"", Toast.LENGTH_SHORT).show();
+            task.execute("http://" + IP_ADDRESS + "/edit.php", "Information",avg+"", Integer.parseInt(tmp.HH)+":"+Integer.parseInt(tmp.MM)+":00");
         }
 
         @Override
@@ -194,8 +203,10 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 }
                 in.close();
+                Toast.makeText(MainActivity.this, "Success", Toast.LENGTH_SHORT).show();
                 return sb.toString();
             } catch (Exception e) {
+                Toast.makeText(MainActivity.this, "Fail", Toast.LENGTH_SHORT).show();
                 return new String("Exception: " + e.getMessage());
             }
         }
