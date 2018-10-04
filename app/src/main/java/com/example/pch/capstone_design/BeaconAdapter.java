@@ -44,24 +44,24 @@ public class BeaconAdapter extends BaseAdapter {
         if (convertView == null) {
             beaconHolder = new BeaconHolder();
             convertView = layoutInflater.inflate(com.example.pch.capstone_design.R.layout.item_beacon, parent, false);
-            beaconHolder.address = convertView.findViewById(com.example.pch.capstone_design.R.id.address);
-            beaconHolder.rssi = convertView.findViewById(com.example.pch.capstone_design.R.id.rssi);
             beaconHolder.time = convertView.findViewById(com.example.pch.capstone_design.R.id.time);
+            beaconHolder.rssi = convertView.findViewById(com.example.pch.capstone_design.R.id.rssi);
+            beaconHolder.value = convertView.findViewById(com.example.pch.capstone_design.R.id.value);
             convertView.setTag(beaconHolder);
         } else {
             beaconHolder = (BeaconHolder)convertView.getTag();
         }
 
-        beaconHolder.time.setText("VALUE :" + beacons.get(position).getNow()+"㎍/m³");
-        beaconHolder.address.setText("ID :"+beacons.get(position).getAddress());
+        beaconHolder.value.setText("VALUE :" + beacons.get(position).getNow()+"㎍/m³");
+        beaconHolder.time.setText("TIME :"+beacons.get(position).getAddress());
         beaconHolder.rssi.setText("RSSI :"+beacons.get(position).getRssi() + "dBm");
         return convertView;
     }
 
     private class BeaconHolder {
-        TextView address;
-        TextView rssi;
         TextView time;
+        TextView rssi;
+        TextView value;
 
     }
 }
